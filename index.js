@@ -1,3 +1,11 @@
+// Hermes doesn't provide TextEncoder/TextDecoder, which the OID4VC DPoP
+// (proof-of-possession) crypto path requires - without this the app crashes
+// with "ReferenceError: Property 'TextEncoder' doesn't exist" during OID4VCI
+// credential acquisition. Must run before any other import.
+if (typeof TextEncoder === 'undefined' || typeof TextDecoder === 'undefined') {
+  require('fast-text-encoding')
+}
+
 import 'react-native-get-random-values'
 import '@ethersproject/shims'
 import 'react-native-gesture-handler'
@@ -19,6 +27,7 @@ import '@formatjs/intl'
 // import '@formatjs/intl-datetimeformat/polyfill'
 // import '@formatjs/intl-datetimeformat/locale-data/en' // locale-data for en
 // import '@formatjs/intl-datetimeformat/add-all-tz' // Add ALL tz data
+import messaging from '@react-native-firebase/messaging'
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native'
 import * as React from 'react'
 import { AppRegistry, LogBox } from 'react-native'
@@ -32,6 +41,12 @@ const navigationTheme = {
 }
 
 LogBox.ignoreAllLogs()
+
+// Register background handler for headless FCM execution
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  // eslint-disable-next-line no-console, no-undef
+  console.log('[FCM Headless Background Task] Received remoteMessage:', remoteMessage)
+})
 
 const Base = () => {
   const navigationRef = useNavigationContainerRef()

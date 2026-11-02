@@ -1,0 +1,18 @@
+diff --git a/node_modules/@credo-ts/openid4vc/build/openid4vc-holder/OpenId4VciHolderService.js b/node_modules/@credo-ts/openid4vc/build/openid4vc-holder/OpenId4VciHolderService.js
+index ed646d9..574d832 100644
+--- a/node_modules/@credo-ts/openid4vc/build/openid4vc-holder/OpenId4VciHolderService.js
++++ b/node_modules/@credo-ts/openid4vc/build/openid4vc-holder/OpenId4VciHolderService.js
+@@ -320,11 +320,13 @@ let OpenId4VciHolderService = class OpenId4VciHolderService {
+                     jwtPayloadProps: { accessToken: tokenResponse.access_token, nonce: (_e = tokenResponse.dpop) === null || _e === void 0 ? void 0 : _e.nonce },
+                 })
+                 : undefined;
++            var _g;
+             const credentialResponse = await credentialRequestClient.acquireCredentialsUsingProof({
+                 proofInput: proofOfPossession,
+                 credentialTypes: (0, issuerMetadataUtils_1.getTypesFromCredentialSupported)(offeredCredentialConfiguration),
+                 format: offeredCredentialConfiguration.format,
+                 createDPoPOpts: createDpopOpts,
++                context: ((_g = offeredCredentialConfiguration.credential_definition) === null || _g === void 0 ? void 0 : _g['@context']) || ['https://www.w3.org/2018/credentials/v1'],
+             });
+             newCNonce = (_f = credentialResponse.successBody) === null || _f === void 0 ? void 0 : _f.c_nonce;
+             // Create credential, but we don't store it yet (only after the user has accepted the credential)

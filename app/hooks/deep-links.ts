@@ -6,6 +6,19 @@ import { useStore } from '../contexts/store'
 
 const assertDeepLinkSupported = async (deepLink: string) => {
   try {
+    if (!deepLink) {
+      return ''
+    }
+    if (
+      deepLink.startsWith('openid-credential-offer://') ||
+      deepLink.startsWith('openid-initiate-issuance://') ||
+      deepLink.startsWith('openid://') ||
+      deepLink.startsWith('openid-vc://') ||
+      deepLink.startsWith('openid4vp://') ||
+      deepLink.startsWith('didcomm://')
+    ) {
+      return deepLink
+    }
     const supported = await Linking.canOpenURL(deepLink)
     if (!supported) {
       return ''
@@ -13,7 +26,7 @@ const assertDeepLinkSupported = async (deepLink: string) => {
 
     return deepLink
   } catch (error) {
-    return ''
+    return deepLink || ''
   }
 }
 

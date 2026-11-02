@@ -1,13 +1,4 @@
-import {
-  ClaimFormat,
-  GenericCredentialExchangeRecord,
-  getOpenId4VcCredentialMetadata,
-  getW3cCredentialDisplay,
-  getW3cIssuerDisplay,
-  JsonTransformer,
-  W3cCredentialJson,
-  W3cCredentialRecord,
-} from '@adeya/ssi'
+import { GenericCredentialExchangeRecord, getCredentialForDisplay } from '@adeya/ssi'
 import React from 'react'
 import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
@@ -25,14 +16,13 @@ export function getTextColorBasedOnBg(bgColor: string) {
 }
 
 const OpenIdCredentialCard: React.FC<OpenIdCredentialCardProps> = ({ credentialRecord, textColor, onPress }) => {
-  const credential = JsonTransformer.toJSON(
-    (credentialRecord as W3cCredentialRecord).credential.claimFormat === ClaimFormat.JwtVc
-      ? credentialRecord?.credential?.credential
-      : credentialRecord?.credential,
-  ) as W3cCredentialJson
-  const openId4VcMetadata = getOpenId4VcCredentialMetadata(credentialRecord as W3cCredentialRecord)
-  const issuerShow = getW3cIssuerDisplay(credential, openId4VcMetadata)
-  const credentialShow = getW3cCredentialDisplay(credential, openId4VcMetadata)
+  // getCredentialForDisplay handles both W3cCredentialRecord and SdJwtVcRecord
+  // shapes correctly - the previous manual claimFormat branching only worked
+  // for W3C credentials and crashed (Cannot read property 'claimFormat' of
+  // undefined) for SD-JWT credentials, which don't have a `.credential` field.
+  const { display } = getCredentialForDisplay(credentialRecord)
+  const issuerShow = display.issuer
+  const credentialShow = display
 
   const styles = StyleSheet.create({
     container: {

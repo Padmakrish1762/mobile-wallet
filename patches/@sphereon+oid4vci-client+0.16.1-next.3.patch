@@ -1,0 +1,43 @@
+diff --git a/node_modules/@sphereon/oid4vci-client/dist/CredentialRequestClient.js b/node_modules/@sphereon/oid4vci-client/dist/CredentialRequestClient.js
+index 616811c..907c66f 100644
+--- a/node_modules/@sphereon/oid4vci-client/dist/CredentialRequestClient.js
++++ b/node_modules/@sphereon/oid4vci-client/dist/CredentialRequestClient.js
+@@ -171,13 +171,11 @@ class CredentialRequestClient {
+                     proof }, opts.subjectIssuance);
+             }
+             else if (format === 'jwt_vc_json-ld' || format === 'ldp_vc') {
+-                if (this.version() >= oid4vci_common_1.OpenId4VCIVersion.VER_1_0_12 && !opts.context) {
+-                    throw Error('No @context value present, but it is required');
+-                }
++                const context = opts.context || (this.credentialRequestOpts && this.credentialRequestOpts.context) || ['https://www.w3.org/2018/credentials/v1'];
+                 return Object.assign(Object.assign({ format,
+                     proof }, opts.subjectIssuance), { credential_definition: {
+                         type: types,
+-                        '@context': opts.context,
++                        '@context': context,
+                     } });
+             }
+             else if (format === 'vc+sd-jwt') {
+diff --git a/node_modules/@sphereon/oid4vci-client/dist/CredentialRequestClientV1_0_11.js b/node_modules/@sphereon/oid4vci-client/dist/CredentialRequestClientV1_0_11.js
+index 2249081..80703cc 100644
+--- a/node_modules/@sphereon/oid4vci-client/dist/CredentialRequestClientV1_0_11.js
++++ b/node_modules/@sphereon/oid4vci-client/dist/CredentialRequestClientV1_0_11.js
+@@ -132,16 +132,14 @@ class CredentialRequestClientV1_0_11 {
+                 };
+             }
+             else if (format === 'jwt_vc_json-ld' || format === 'ldp_vc') {
+-                if (this.version() >= oid4vci_common_1.OpenId4VCIVersion.VER_1_0_12 && !opts.context) {
+-                    throw Error('No @context value present, but it is required');
+-                }
++                const context = opts.context || ['https://www.w3.org/2018/credentials/v1'];
+                 return {
+                     format,
+                     proof,
+                     // Ignored because v11 does not have the context value, but it is required in v12
+                     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                     // @ts-ignore
+-                    credential_definition: Object.assign({ types }, (opts.context && { '@context': opts.context })),
++                    credential_definition: Object.assign({ types }, { '@context': context }),
+                 };
+             }
+             else if (format === 'vc+sd-jwt') {

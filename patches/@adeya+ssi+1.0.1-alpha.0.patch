@@ -1,0 +1,66 @@
+diff --git a/node_modules/@adeya/ssi/build/openid/openIdHelpers.js b/node_modules/@adeya/ssi/build/openid/openIdHelpers.js
+index e7cd93f..04a3d6e 100644
+--- a/node_modules/@adeya/ssi/build/openid/openIdHelpers.js
++++ b/node_modules/@adeya/ssi/build/openid/openIdHelpers.js
+@@ -82,12 +82,16 @@ const sanitizeString = (str) => {
+ };
+ exports.sanitizeString = sanitizeString;
+ const isW3CCredentialRecord = (record) => {
+-    var _a;
+-    return ((_a = record.getTags()) === null || _a === void 0 ? void 0 : _a.claimFormat) === core_1.ClaimFormat.JwtVc;
++    var _a, _b;
++    const tags = record.getTags ? record.getTags() : ((_a = record.tags) !== null && _a !== void 0 ? _a : {});
++    if ((tags === null || tags === void 0 ? void 0 : tags.claimFormat) === core_1.ClaimFormat.JwtVc) return true;
++    const meta = (_b = record.metadata) === null || _b === void 0 ? void 0 : _b.data;
++    if (meta && (meta['openId4VcCredential'] || meta['openId4VcCredentialMetadataKey'])) return true;
++    return Boolean(record.credential);
+ };
+ exports.isW3CCredentialRecord = isW3CCredentialRecord;
+ const filterW3CCredentialsOnly = (credentials) => {
+-    return credentials.filter((r) => (0, exports.isW3CCredentialRecord)(r));
++    return (credentials || []).filter((r) => (0, exports.isW3CCredentialRecord)(r));
+ };
+ exports.filterW3CCredentialsOnly = filterW3CCredentialsOnly;
+ const addRecord = (record, state) => {
+diff --git a/node_modules/@adeya/ssi/build/openid/resolver.d.ts b/node_modules/@adeya/ssi/build/openid/resolver.d.ts
+index a044462..810c3a5 100644
+--- a/node_modules/@adeya/ssi/build/openid/resolver.d.ts
++++ b/node_modules/@adeya/ssi/build/openid/resolver.d.ts
+@@ -4,5 +4,6 @@ export type OpenID4VCIParam = {
+     agent: Agent;
+     data?: string;
+     uri?: string;
++    pin?: string;
+ };
+-export declare const receiveCredentialFromOpenId4VciOffer: ({ agent, data, uri }: OpenID4VCIParam) => Promise<W3cCredentialRecord | SdJwtVcRecord>;
++export declare const receiveCredentialFromOpenId4VciOffer: ({ agent, data, uri, pin }: OpenID4VCIParam) => Promise<W3cCredentialRecord | SdJwtVcRecord>;
+diff --git a/node_modules/@adeya/ssi/build/openid/resolver.js b/node_modules/@adeya/ssi/build/openid/resolver.js
+index 4a15b91..486e759 100644
+--- a/node_modules/@adeya/ssi/build/openid/resolver.js
++++ b/node_modules/@adeya/ssi/build/openid/resolver.js
+@@ -4,7 +4,7 @@ exports.receiveCredentialFromOpenId4VciOffer = void 0;
+ const core_1 = require("@credo-ts/core");
+ const openid4vc_1 = require("@credo-ts/openid4vc");
+ const metadata_1 = require("./metadata");
+-const receiveCredentialFromOpenId4VciOffer = async ({ agent, data, uri }) => {
++const receiveCredentialFromOpenId4VciOffer = async ({ agent, data, uri, pin }) => {
+     let offerUri = uri;
+     if (!offerUri && data) {
+         // FIXME: Credo only support credential offer string, but we already parsed it before. So we construct an offer here
+@@ -22,6 +22,7 @@ const receiveCredentialFromOpenId4VciOffer = async ({ agent, data, uri }) => {
+     const resolvedCredentialOffer = await agent.modules.openId4VcHolder.resolveCredentialOffer(offerUri);
+     // FIXME: return credential_supported entry for credential so it's easy to store metadata
+     const credentials = await agent.modules.openId4VcHolder.acceptCredentialOfferUsingPreAuthorizedCode(resolvedCredentialOffer, {
++        userPin: pin,
+         credentialBindingResolver: async ({ supportedDidMethods, keyType, supportsAllDidMethods, supportsJwk, credentialFormat }) => {
+             var _a;
+             // First, we try to pick a did method
+@@ -96,7 +97,7 @@ const receiveCredentialFromOpenId4VciOffer = async ({ agent, data, uri }) => {
+         record = new core_1.W3cCredentialRecord({
+             credential: firstCredential,
+             // We don't support expanded types right now, but would become problem when we support JSON-LD
+-            tags: {}
++            tags: { claimFormat: core_1.ClaimFormat.JwtVc }
+         });
+     }
+     const openId4VcMetadata = (0, metadata_1.extractOpenId4VcCredentialMetadata)(resolvedCredentialOffer.offeredCredentials[0], resolvedCredentialOffer.metadata);

@@ -1,4 +1,10 @@
-import { deleteConnectionRecordById, ProofState, useProofByState } from '@adeya/ssi'
+import {
+  deleteConnectionRecordById,
+  parseInvitationUrl,
+  ProofState,
+  resolveOpenIDPresentationRequest,
+  useProofByState,
+} from '@adeya/ssi'
 import { useNavigation } from '@react-navigation/core'
 import { createStackNavigator, StackCardStyleInterpolator, StackNavigationProp } from '@react-navigation/stack'
 import React, { useEffect, useRef, useState } from 'react'
@@ -101,6 +107,39 @@ const RootStack: React.FC = () => {
         if (invitationUrl.includes('?url=')) {
           const parts = invitationUrl.split('=')
           invitationUrl = parts[1]
+        }
+
+        const openIdCheck = parseInvitationUrl(invitationUrl)
+        if (openIdCheck?.success) {
+          const invitationData = openIdCheck.result
+          if (invitationData.type === 'openid-credential-offer') {
+            const uri = invitationData.format === 'url' ? (invitationData.data as string) : undefined
+            const data =
+              invitationData.format === 'parsed' ? encodeURIComponent(JSON.stringify(invitationData.data)) : undefined
+
+            navigation.navigate(Stacks.NotificationStack as any, {
+              screen: Screens.OpenIdCredentialOffer,
+              params: { uri, data },
+            })
+            dispatch({
+              type: DispatchAction.ACTIVE_DEEP_LINK,
+              payload: [undefined],
+            })
+            return
+          }
+          if (invitationData.type === 'openid-authorization-request') {
+            const uri = invitationData.data as string
+            const value = await resolveOpenIDPresentationRequest(uri, agent)
+            navigation.navigate(Stacks.NotificationStack as any, {
+              screen: Screens.OpenIDProofPresentation,
+              params: { credential: value },
+            })
+            dispatch({
+              type: DispatchAction.ACTIVE_DEEP_LINK,
+              payload: [undefined],
+            })
+            return
+          }
         }
 
         // check if connection already exists

@@ -138,6 +138,7 @@ const NewQRView: React.FC<Props> = ({ defaultToConnect, handleCodeScan, error, e
         <RNCamera
           style={styles.camera}
           type={RNCamera.Constants.Type.back}
+          autoFocus={RNCamera.Constants.AutoFocus.on}
           flashMode={torchActive ? RNCamera.Constants.FlashMode.torch : RNCamera.Constants.FlashMode.off}
           captureAudio={false}
           androidCameraPermissionOptions={{

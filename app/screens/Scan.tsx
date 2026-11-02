@@ -5,6 +5,7 @@ import { StackScreenProps } from '@react-navigation/stack'
 import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DeviceEventEmitter, Platform } from 'react-native'
+import Config from 'react-native-config'
 import { check, Permission, PERMISSIONS, request, RESULTS } from 'react-native-permissions'
 import Toast from 'react-native-toast-message'
 
@@ -103,7 +104,11 @@ const Scan: React.FC<ScanProps> = ({ navigation, route }) => {
   const handleInvitationUrls = (url: string) => {
     return parseInvitationUrl(url)
   }
-  const handleInvitation = async (value: string): Promise<void> => {
+  const handleInvitation = async (rawValue: string): Promise<void> => {
+    const value =
+      Config.PUBLIC_ORG && /^https?:\/\/[^/]+:5000(\/.*)$/.test(rawValue.trim())
+        ? rawValue.trim().replace(/^https?:\/\/[^/]+:5000/, Config.PUBLIC_ORG.replace(/\/$/, ''))
+        : rawValue.trim()
     try {
       setLoading(true)
       const response = handleInvitationUrls(value)

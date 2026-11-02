@@ -405,6 +405,8 @@ const translation = {
     "CredentialOnTheWay": "Your credential is on the way",
     "NewCredentialOffer": "New Credential Offer",
     "IsOfferingYouACredential": "is offering you a credential",
+    "EnterPin": "This issuer requires a PIN to accept the credential offer.",
+    "InvalidPin": "Incorrect PIN, please try again",
     "ConfirmDeclinedTitle": "Are you sure you want to decline this credential?",
     "ConfirmDeclinedMessage": "In order to receive the credential offer again, you will need to reapply with the issuer.",
     "ConfirmDecline": "Yes, decline this credential",

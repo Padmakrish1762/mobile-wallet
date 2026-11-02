@@ -179,7 +179,7 @@ const OpenIDProofPresentation: React.FC<OpenIDProofPresentationProps> = ({
             <View key={index}>
               <OpenIDCredentialRowCard
                 name={credential.name}
-                bgImage={selectedCredential.backgroundImage?.url}
+                bgImage={selectedCredential?.backgroundImage?.url}
                 issuer={verifierName}
                 onPress={() => {}}
               />

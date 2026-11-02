@@ -5,13 +5,14 @@ import {
   GenericCredentialExchangeRecord,
   getAllW3cCredentialRecords,
   openId4VcCredentialMetadataKey,
+  SdJwtVcRecord,
   useConnections,
   useCredentialByState,
   W3cCredentialRecord,
 } from '@adeya/ssi'
 import { useNavigation } from '@react-navigation/core'
 import { StackNavigationProp } from '@react-navigation/stack'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FlatList, StyleSheet, View } from 'react-native'
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen'
@@ -37,54 +38,84 @@ const ListCredentials: React.FC<Props> = ({ isHorizontal = false }) => {
   const { agent } = useAppAgent()
   const { credentialEmptyList: CredentialEmptyList } = useConfiguration()
   const {
-    openIdState: { w3cCredentialRecords },
+    openIdState: { w3cCredentialRecords, sdJwtVcRecords },
   } = useOpenIDCredentials()
-  const credentials: GenericCredentialExchangeRecord[] = [
-    ...useCredentialByState(CredentialState.CredentialReceived),
-    ...useCredentialByState(CredentialState.Done),
-    ...w3cCredentialRecords,
-  ]
+  const receivedCreds = useCredentialByState(CredentialState.CredentialReceived)
+  const doneCreds = useCredentialByState(CredentialState.Done)
+  const linkedW3cRecordIds = useMemo(() => {
+    const ids = new Set<string>()
+    ;[...receivedCreds, ...doneCreds].forEach(credential => {
+      const credentialRecordId = (credential as any)?.credentials?.[0]?.credentialRecordId
+      if (credentialRecordId) {
+        ids.add(credentialRecordId)
+      }
+    })
+    return ids
+  }, [receivedCreds, doneCreds])
+  // Exclude W3C records already represented by a DIDComm credential exchange record above,
+  // otherwise the same credential renders twice (once per representation).
+  const unlinkedW3cCredentialRecords = useMemo(
+    () => w3cCredentialRecords.filter(record => !linkedW3cRecordIds.has(record.id)),
+    [w3cCredentialRecords, linkedW3cRecordIds],
+  )
+  const credentials: GenericCredentialExchangeRecord[] = useMemo(
+    // SD-JWT credentials only arrive via OID4VC in this app (no DIDComm
+    // equivalent), so unlike W3C records there's no "already represented by
+    // a DIDComm exchange record" case to de-duplicate against.
+    () => [...receivedCreds, ...doneCreds, ...unlinkedW3cCredentialRecords, ...(sdJwtVcRecords || [])],
+    [receivedCreds, doneCreds, unlinkedW3cCredentialRecords, sdJwtVcRecords],
+  )
   const [credentialList, setCredentialList] = useState<(CredentialExchangeRecord | EnhancedW3CRecord)[] | undefined>([])
   const { records: connectionRecords } = useConnections()
 
   const navigation = useNavigation<StackNavigationProp<CredentialStackParams>>()
 
   useEffect(() => {
+    let isMounted = true
     const updateCredentials = async () => {
       if (!agent) {
         return
       }
 
-      const w3cCredentialRecords = await getAllW3cCredentialRecords(agent)
+      let allW3c: W3cCredentialRecord[] = []
+      try {
+        allW3c = await getAllW3cCredentialRecords(agent)
+      } catch (e) {
+        // ignore
+      }
 
       const updatedCredentials = credentials.map(credential => {
+        const metaKeys = Object.keys(credential.metadata?.data || {})
         if (
-          !Object.keys(credential.metadata.data).includes(openId4VcCredentialMetadataKey) &&
-          !Object.keys(credential.metadata.data).includes(AnonCredsCredentialMetadataKey)
+          !metaKeys.includes(openId4VcCredentialMetadataKey) &&
+          !metaKeys.includes(AnonCredsCredentialMetadataKey) &&
+          (credential as any)?.credentials?.[0]?.credentialRecordId
         ) {
-          const credentialRecordId = credential?.credentials[0].credentialRecordId
+          const credentialRecordId = (credential as any)?.credentials?.[0]?.credentialRecordId
           try {
-            const record = w3cCredentialRecords.find(record => record.id === credentialRecordId)
-            if (!credential?.connectionId) {
-              throw new Error('Connection Id notfound')
+            const record = allW3c.find(record => record.id === credentialRecordId)
+            const connection = connectionRecords.find(connection => connection.id === (credential as any)?.connectionId)
+            const enhancedRecord = (record || credential) as EnhancedW3CRecord
+            if (connection?.theirLabel) {
+              enhancedRecord.connectionLabel = connection.theirLabel
             }
-            const connection = connectionRecords.find(connection => connection.id === credential?.connectionId)
-            const enhancedRecord = record as EnhancedW3CRecord
-            enhancedRecord.connectionLabel = connection?.theirLabel
             return enhancedRecord
           } catch (e: unknown) {
-            throw new Error(`${e}`)
+            return credential
           }
         }
         return credential
       })
-      return updatedCredentials
+      if (isMounted) {
+        setCredentialList(updatedCredentials as (CredentialExchangeRecord | EnhancedW3CRecord)[])
+      }
     }
 
-    updateCredentials().then(updatedCredentials => {
-      setCredentialList(updatedCredentials)
-    })
-  }, [credentialList])
+    updateCredentials()
+    return () => {
+      isMounted = false
+    }
+  }, [credentials, connectionRecords, agent])
 
   const styles = StyleSheet.create({
     container: { flex: 1, marginHorizontal: 10 },
@@ -124,8 +155,12 @@ const ListCredentials: React.FC<Props> = ({ isHorizontal = false }) => {
                 />
               ) : (
                 <CredentialCard
-                  schemaId={credential.credential.type[1]}
-                  connectionLabel={credential.connectionLabel}
+                  schemaId={
+                    credential instanceof SdJwtVcRecord
+                      ? (credential as SdJwtVcRecord).getTags().vct
+                      : (credential as W3cCredentialRecord).credential.type[1]
+                  }
+                  connectionLabel={(credential as EnhancedW3CRecord).connectionLabel}
                   credential={credential}
                   onPress={() => {
                     if (!Object.keys(credential.metadata.data).includes(openId4VcCredentialMetadataKey)) {

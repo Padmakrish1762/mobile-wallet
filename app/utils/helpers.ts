@@ -1079,9 +1079,14 @@ export const createTempConnectionInvitation = async (agent: AdeyaAgent, type: 'i
 export const fetchUrlData = async (url: string) => {
   const res = await fetch(url, {
     method: 'GET',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    headers: { Accept: 'application/json, text/plain, */*' },
   })
-  return await res.json()
+  const text = (await res.text()).trim()
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
 }
 
 /**

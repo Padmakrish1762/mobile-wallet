@@ -2,6 +2,7 @@ import {
   CredentialExchangeRecord,
   GenericCredentialExchangeRecord,
   openId4VcCredentialMetadataKey,
+  SdJwtVcRecord,
   W3cCredentialRecord,
 } from '@adeya/ssi'
 import { Attribute, BrandingOverlayType, Predicate } from '@hyperledger/aries-oca/build/legacy'
@@ -70,7 +71,12 @@ const CredentialCard: React.FC<CredentialCardProps> = ({
       )
     }
 
-    if (credential instanceof W3cCredentialRecord || credential?.credentialAttributes?.length === 0) {
+    if (
+      credential &&
+      (credential instanceof W3cCredentialRecord ||
+        credential instanceof SdJwtVcRecord ||
+        (credential as CredentialExchangeRecord)?.credentialAttributes?.length === 0)
+    ) {
       return (
         <>
           {Object.keys(credential.metadata.data).includes(openId4VcCredentialMetadataKey) ? (
