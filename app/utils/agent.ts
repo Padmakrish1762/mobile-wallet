@@ -21,7 +21,7 @@ import indyLedgers from '../../configs/ledgers/indy'
 export const adeyaAgentModules = () => {
   return {
     ...getAgentModules({
-      mediatorInvitationUrl: Config.MEDIATOR_URL!,
+      mediatorInvitationUrl: Config.MEDIATOR_URL || undefined,
       mediatorPickupStrategy: MediatorPickupStrategy.PickUpV2LiveMode,
       indyNetworks: indyLedgers,
     }),

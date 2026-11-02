@@ -263,7 +263,8 @@ const Splash: React.FC = () => {
 
         setStep(5)
         if (!Config.MEDIATOR_URL) {
-          throw new Error('Missing mediator URL')
+          // eslint-disable-next-line no-console
+          console.warn('MEDIATOR_URL is not set. Proceeding without mediator.')
         }
 
         const agentConfig: InitConfig = {
