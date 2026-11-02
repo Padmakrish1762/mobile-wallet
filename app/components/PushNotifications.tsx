@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Platform } from 'react-native'
+import { check, PERMISSIONS, RESULTS } from 'react-native-permissions'
 
 import PushNotificationsModal from '../components/modals/PushNotificationsModal'
-import { isMediatorCapable, isRegistered, setup, isUserDenied } from '../utils/PushNotificationHelper'
+import { setup, isUserDenied } from '../utils/PushNotificationHelper'
 import { useAppAgent } from '../utils/agent'
 
 const PushNotifications = () => {
@@ -17,13 +19,29 @@ const PushNotifications = () => {
   }
 
   const initializeCapabilityRequest = async () => {
-    if (!agent || !(await isMediatorCapable(agent)) || (await isRegistered())) return
-    setInfoModalVisible(true)
+    if (!agent) return
+    let needsPrompt = false
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      try {
+        const hasPerm = (await check(PERMISSIONS.ANDROID.POST_NOTIFICATIONS)) === RESULTS.GRANTED
+        if (!hasPerm && !(await isUserDenied())) {
+          needsPrompt = true
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    if (needsPrompt) {
+      setInfoModalVisible(true)
+    } else {
+      setup(agent, false)
+    }
   }
 
   useEffect(() => {
     initializeCapabilityRequest()
-  }, [agent]) // Reload if agent becomes defined
+  }, [agent])
 
   return (
     <PushNotificationsModal

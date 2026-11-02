@@ -56,6 +56,20 @@ public class MainApplication extends Application implements ReactApplication {
   public void onCreate() {
       super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+      android.app.NotificationChannel channel = new android.app.NotificationChannel(
+          "default",
+          "Default Notifications",
+          android.app.NotificationManager.IMPORTANCE_HIGH
+      );
+      channel.setDescription("Default notification channel for CREDEBL Wallet");
+      channel.enableVibration(true);
+      channel.enableLights(true);
+      android.app.NotificationManager manager = getSystemService(android.app.NotificationManager.class);
+      if (manager != null) {
+        manager.createNotificationChannel(channel);
+      }
+    }
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
       DefaultNewArchitectureEntryPoint.load();
