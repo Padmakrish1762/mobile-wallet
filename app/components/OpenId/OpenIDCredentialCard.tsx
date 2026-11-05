@@ -1,5 +1,6 @@
 import { GenericCredentialExchangeRecord } from '@credebl/ssi-mobile-didcomm'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 import { openId4VcCredentialMetadataKey } from '../../constants'
@@ -36,6 +37,7 @@ const OpenIdCredentialCard: React.FC<OpenIdCredentialCardProps> = ({
   const credentialShow = openId4VcMetadata?.credential?.display?.[0]
 
   const { TextTheme } = useTheme()
+  const { t } = useTranslation()
 
   const styles = StyleSheet.create({
     container: {
@@ -128,7 +130,7 @@ const OpenIdCredentialCard: React.FC<OpenIdCredentialCardProps> = ({
     },
   })
 
-  textColor = credentialShow.text_color
+  textColor = credentialShow?.text_color
     ? credentialShow.text_color
     : getTextColorBasedOnBg(ColorPallet.brand.primary ?? '#000')
 
@@ -140,7 +142,7 @@ const OpenIdCredentialCard: React.FC<OpenIdCredentialCardProps> = ({
         activeOpacity={0.7}>
         <ImageBackground
           source={{ uri: credentialShow?.background_image?.uri }}
-          style={[styles.backgroundView, { backgroundColor: credentialShow.background_color }]}
+          style={[styles.backgroundView, { backgroundColor: credentialShow?.background_color }]}
           imageStyle={styles.backgroundImage}
           resizeMode="cover">
           {credentialFormat && (
@@ -176,13 +178,23 @@ const OpenIdCredentialCard: React.FC<OpenIdCredentialCardProps> = ({
                     },
                   ]}
                   numberOfLines={2}>
-                  {credentialShow.name}
+                  {credentialShow?.name}
                 </Text>
                 <Text style={[styles.subtitle, { color: textColor }]} numberOfLines={1}>
-                  {credentialShow.description}
+                  {credentialShow?.description}
                 </Text>
               </View>
             </View>
+            {issuerShow?.name ? (
+              <View style={styles.cardFooter}>
+                <View style={styles.footerTextContainer}>
+                  <Text style={[styles.issuerLabel, { color: textColor }]}>{t('Credentials.IssuedBy')}</Text>
+                  <Text style={[styles.issuerName, { color: textColor }]} numberOfLines={1}>
+                    {issuerShow.name}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
           </View>
         </ImageBackground>
       </TouchableOpacity>
