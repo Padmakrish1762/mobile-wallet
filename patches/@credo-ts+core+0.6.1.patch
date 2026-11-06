@@ -1,0 +1,22 @@
+diff --git a/node_modules/@credo-ts/core/build/modules/sd-jwt-vc/SdJwtVcService.mjs b/node_modules/@credo-ts/core/build/modules/sd-jwt-vc/SdJwtVcService.mjs
+index 07a0c32..c943d62 100644
+--- a/node_modules/@credo-ts/core/build/modules/sd-jwt-vc/SdJwtVcService.mjs
++++ b/node_modules/@credo-ts/core/build/modules/sd-jwt-vc/SdJwtVcService.mjs
+@@ -161,7 +161,7 @@ let SdJwtVcService = class SdJwtVcService$1 {
+ 					requiredClaimKeys: requiredClaimKeys ? [...requiredClaimKeys, "vct"] : ["vct"],
+ 					keyBindingNonce: keyBinding?.nonce,
+ 					currentDate: dateToSeconds(now ?? /* @__PURE__ */ new Date()),
+-					skewSeconds: 0
++					skewSeconds: 5
+ 				});
+ 			} catch (error) {
+ 				return {
+@@ -178,7 +178,7 @@ let SdJwtVcService = class SdJwtVcService$1 {
+ 			try {
+ 				JwtPayload.fromJson(returnSdJwtVc.payload).validate({
+ 					now: dateToSeconds(now ?? /* @__PURE__ */ new Date()),
+-					skewTime: 0
++					skewTime: 5
+ 				});
+ 			} catch (error) {
+ 				return {
