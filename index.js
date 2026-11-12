@@ -34,7 +34,7 @@ import '@formatjs/intl'
 // import '@formatjs/intl-datetimeformat/polyfill'
 // import '@formatjs/intl-datetimeformat/locale-data/en' // locale-data for en
 // import '@formatjs/intl-datetimeformat/add-all-tz' // Add ALL tz data
-import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native'
+import { DefaultTheme, NavigationContainer, useNavigationContainerRef } from '@react-navigation/native'
 import * as React from 'react'
 import { AppRegistry, LogBox } from 'react-native'
 
@@ -44,6 +44,8 @@ import { name as appName } from './app.json'
 
 const navigationTheme = {
   ...NavigationTheme,
+  // React Navigation 7 requires theme.fonts (used by header back button, etc.)
+  fonts: DefaultTheme.fonts,
 }
 
 LogBox.ignoreAllLogs()

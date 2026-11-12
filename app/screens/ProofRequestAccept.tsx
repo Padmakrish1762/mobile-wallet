@@ -1,5 +1,5 @@
 import { DidCommProofState, useProofById } from '@credebl/ssi-mobile-didcomm'
-import { useNavigation } from '@react-navigation/core'
+import { CommonActions, useNavigation } from '@react-navigation/core'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Platform, Modal, StatusBar, StyleSheet, Text, View, ScrollView } from 'react-native'
@@ -21,6 +21,7 @@ export interface ProofRequestAcceptProps {
 const ProofRequestAccept: React.FC<ProofRequestAcceptProps> = ({ visible, proofId, confirmationOnly }) => {
   const { t } = useTranslation()
   const [proofDeliveryStatus, setProofDeliveryStatus] = useState<DidCommProofState>(DidCommProofState.RequestReceived)
+  const [dismissed, setDismissed] = useState(false)
   const proof = useProofById(proofId)
   const navigation = useNavigation()
   const { ColorPallet, TextTheme } = useTheme()
@@ -57,7 +58,19 @@ const ProofRequestAccept: React.FC<ProofRequestAcceptProps> = ({ visible, proofI
   }
 
   const onBackToHomeTouched = () => {
-    navigation.getParent()?.navigate(Stacks.TabStack, { screen: TabStacks.HomeStack, params: { screen: Screens.Home } })
+    // Close the native modal first; navigating underneath an open iOS modal is a silent no-op.
+    setDismissed(true)
+    setTimeout(() => {
+      // dispatch bubbles up to whichever parent navigator owns the Tab Stack route
+      navigation.dispatch(
+        CommonActions.navigate({
+          name: Stacks.TabStack,
+          // React Navigation 7: navigate() pushes by default; pop back to the existing Tab Stack instead
+          pop: true,
+          params: { screen: TabStacks.HomeStack, params: { screen: Screens.Home } },
+        }),
+      )
+    }, 300)
   }
 
   useEffect(() => {
@@ -77,7 +90,7 @@ const ProofRequestAccept: React.FC<ProofRequestAcceptProps> = ({ visible, proofI
   }, [proof, proofDeliveryStatus, confirmationOnly])
 
   return (
-    <Modal visible={visible} transparent={true} animationType={'none'} >
+    <Modal visible={visible && !dismissed} transparent={true} animationType={'none'}>
       <StatusBar
         barStyle={
           Platform.OS === 'android' ? StatusBarStyles.Light : statusBarStyleForColor(styles.container.backgroundColor)
@@ -96,12 +109,12 @@ const ProofRequestAccept: React.FC<ProofRequestAcceptProps> = ({ visible, proofI
 
             {(proofDeliveryStatus === DidCommProofState.PresentationSent ||
               proofDeliveryStatus === DidCommProofState.Done) && (
-                <Text
-                  style={[TextTheme.modalHeadingThree, styles.messageText]}
-                  testID={testIdWithKey('SentProofRequest')}>
-                  {t('ProofRequest.InformationSentSuccessfully')}
-                </Text>
-              )}
+              <Text
+                style={[TextTheme.modalHeadingThree, styles.messageText]}
+                testID={testIdWithKey('SentProofRequest')}>
+                {t('ProofRequest.InformationSentSuccessfully')}
+              </Text>
+            )}
           </View>
 
           <View style={[styles.image, { minHeight: 250, alignItems: 'center', justifyContent: 'flex-end' }]}>
