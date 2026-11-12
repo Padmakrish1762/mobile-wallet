@@ -1,0 +1,23 @@
+diff --git a/node_modules/@react-native-community/cli-platform-apple/build/commands/runCommand/runOnSimulator.js b/node_modules/@react-native-community/cli-platform-apple/build/commands/runCommand/runOnSimulator.js
+index 4581437..f14a83b 100644
+--- a/node_modules/@react-native-community/cli-platform-apple/build/commands/runCommand/runOnSimulator.js
++++ b/node_modules/@react-native-community/cli-platform-apple/build/commands/runCommand/runOnSimulator.js
+@@ -42,7 +42,17 @@ async function runOnSimulator(xcodeProject, platform, mode, scheme, args, simula
+   const activeDeveloperDir = _child_process().default.execFileSync('xcode-select', ['-p'], {
+     encoding: 'utf8'
+   }).trim();
+-  _child_process().default.execFileSync('open', [`${activeDeveloperDir}/Applications/Simulator.app`, '--args', '-CurrentDeviceUDID', simulator.udid]);
++  try {
++    const fs = require('fs');
++    const simApp = `${activeDeveloperDir}/Applications/Simulator.app`;
++    if (fs.existsSync(simApp)) {
++      _child_process().default.execFileSync('open', [simApp, '--args', '-CurrentDeviceUDID', simulator.udid]);
++    } else {
++      _child_process().default.execFileSync('open', ['-a', 'DeviceHub']);
++    }
++  } catch (e) {
++    _cliTools().logger.debug(`Could not open Simulator/DeviceHub: ${e.message}`);
++  }
+   if (simulator.state !== 'Booted') {
+     bootSimulator(simulator);
+   }
